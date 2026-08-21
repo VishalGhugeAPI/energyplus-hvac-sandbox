@@ -1,0 +1,25 @@
+{
+    "name": "HVAC Sandbox Building",
+    "rooms": [
+        {
+            "name": "Room 1",
+            "length": 5.0,
+            "width": 4.0,
+            "height": 3.0,
+            "people": 4,
+            "lighting_w_per_m2": 10.0,
+            "equipment_w_per_m2": 8.0,
+            "infiltration_ach": 0.5
+        },
+        {
+            "name": "Room 2",
+            "length": 4.0,
+            "width": 4.0,
+            "height": 3.0,
+            "people": 3,
+            "lighting_w_per_m2": 10.0,
+            "equipment_w_per_m2": 8.0,
+            "infiltration_ach": 0.5
+        }
+    ]
+}
