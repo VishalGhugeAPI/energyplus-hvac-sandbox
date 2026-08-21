@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# EnergyPlus installation
+EnergyPlus-23.2.0-7636e6b3e9-Linux-Ubuntu22.04-x86_64/
+EnergyPlus-23.2.0.tar.gz
+
+# EnergyPlus generated output
+custom_model/eplusout.*
+custom_model/eplustbl.*
+custom_model/epluszsz.*
+custom_model/sqlite.err
+custom_model/output/
+
+# Test output
+test_run/
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code local settings
+.vscode/settings.json
