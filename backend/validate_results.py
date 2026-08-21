@@ -1,21 +1,16 @@
 import csv
 import json
 from pathlib import Path
+import argparse
 
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
 
-PROJECT_ROOT = Path("/workspaces/energyplus-hvac-sandbox")
-
-CSV_FILE = PROJECT_ROOT / "test_run" / "epluszsz.csv"
-
-JSON_FILE = (
-    PROJECT_ROOT
-    / "test_run"
-    / "zone_sizing_results.json"
-)
+# Input paths are supplied through command-line arguments.
+CSV_FILE = None
+JSON_FILE = None
 
 
 # ============================================================
@@ -318,6 +313,17 @@ def values_match(csv_value, json_value, tolerance=0.000001):
 # ============================================================
 
 def validate():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input-csv", required=True)
+    parser.add_argument("--input-json", required=True)
+    args = parser.parse_args()
+
+    global CSV_FILE
+    global JSON_FILE
+
+    CSV_FILE = Path(args.input_csv)
+    JSON_FILE = Path(args.input_json)
 
     print()
     print("=" * 75)

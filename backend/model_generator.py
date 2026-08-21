@@ -1,13 +1,17 @@
 import json
+import argparse
 from pathlib import Path
 
 
-BASE_DIR = Path("/workspaces/energyplus-hvac-sandbox")
-INPUT_JSON = BASE_DIR / "custom_model" / "building.json"
-OUTPUT_IDF = BASE_DIR / "custom_model" / "building.idf"
-
-
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", required=True)
+    parser.add_argument("--output", required=True)
+    args = parser.parse_args()
+
+    INPUT_JSON = Path(args.input)
+    OUTPUT_IDF = Path(args.output)
+
     print("=" * 70)
     print("HVAC SANDBOX - ENERGYPLUS 23.2 MODEL GENERATOR")
     print("=" * 70)

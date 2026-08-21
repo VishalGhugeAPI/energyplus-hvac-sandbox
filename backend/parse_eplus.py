@@ -2,21 +2,14 @@ import csv
 import json
 import re
 from pathlib import Path
+import argparse
 
 
 # ============================================================
 # ENERGYPLUS 23.2 ZONE SIZING RESULT PARSER
 # ============================================================
 
-PROJECT_ROOT = Path("/workspaces/energyplus-hvac-sandbox")
-
-INPUT_FILE = PROJECT_ROOT / "test_run" / "epluszsz.csv"
-
-OUTPUT_FILE = (
-    PROJECT_ROOT
-    / "test_run"
-    / "zone_sizing_results.json"
-)
+# Input/output paths are supplied through command-line arguments.
 
 
 # ============================================================
@@ -676,6 +669,14 @@ def print_summary(data):
 # ============================================================
 
 def main():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input-csv", required=True)
+    parser.add_argument("--output-json", required=True)
+    args = parser.parse_args()
+
+    INPUT_FILE = Path(args.input_csv)
+    OUTPUT_FILE = Path(args.output_json)
 
     print(
         "Starting EnergyPlus 23.2 result parser..."
