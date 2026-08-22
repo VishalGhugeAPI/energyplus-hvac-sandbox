@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pathlib import Path
 from dotenv import load_dotenv
 import json
@@ -19,13 +19,13 @@ app = FastAPI(
 
 
 class Room(BaseModel):
-    name: str
-    area_m2: float
-    volume_m3: float
+    name: str = Field(min_length=1)
+    area_m2: float = Field(gt=0)
+    volume_m3: float = Field(gt=0)
 
 
 class BuildingInput(BaseModel):
-    rooms: list[Room]
+    rooms: list[Room] = Field(min_length=1)
 
 
 @app.get("/")
@@ -111,17 +111,25 @@ def calculate(building: BuildingInput):
 
         eplus_dir.mkdir(parents=True, exist_ok=True)
 
-        subprocess.run(
-            [
-                str(energyplus),
-                "-w",
-                str(weather),
-                "-d",
-                str(eplus_dir),
-                str(idf_file),
-            ],
-            check=True,
-        )
+        try:
+            subprocess.run(
+                [
+                    str(energyplus),
+                    "-w",
+                    str(weather),
+                    "-d",
+                    str(eplus_dir),
+                    str(idf_file),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            raise HTTPException(
+                status_code=500,
+                detail="EnergyPlus simulation failed.",
+            ) from exc
 
         if not csv_file.exists():
             raise HTTPException(
