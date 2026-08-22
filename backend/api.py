@@ -1,9 +1,26 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from pathlib import Path
+import json
+import subprocess
+import sys
+import tempfile
+
 
 app = FastAPI(
     title="EnergyPlus HVAC Sizing API",
     version="1.0.0",
 )
+
+
+class Room(BaseModel):
+    name: str
+    area_m2: float
+    volume_m3: float
+
+
+class BuildingInput(BaseModel):
+    rooms: list[Room]
 
 
 @app.get("/")
@@ -19,3 +36,102 @@ def health():
     return {
         "status": "healthy",
     }
+
+
+@app.post("/calculate")
+def calculate(building: BuildingInput):
+    project_root = Path(__file__).resolve().parent.parent
+    model_generator = project_root / "backend" / "model_generator.py"
+    parser_script = project_root / "backend" / "parse_eplus.py"
+    validator_script = project_root / "backend" / "validate_results.py"
+
+    energyplus = next(
+        project_root.glob(
+            "EnergyPlus-23.2.0-*/energyplus-23.2.0"
+        ),
+        None,
+    )
+
+    weather = next(
+        (
+            project_root / "EnergyPlus-23.2.0-7636e6b3e9-Linux-Ubuntu22.04-x86_64"
+        ).glob("WeatherData/*.epw"),
+        None,
+    )
+
+    if not energyplus or not weather:
+        raise HTTPException(
+            status_code=500,
+            detail="EnergyPlus executable or weather file not found.",
+        )
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp = Path(temp_dir)
+
+        input_json = temp / "building.json"
+        idf_file = temp / "building.idf"
+        eplus_dir = temp / "eplus_run"
+        csv_file = eplus_dir / "epluszsz.csv"
+        result_json = temp / "zone_sizing_results.json"
+
+        input_json.write_text(
+            json.dumps(building.model_dump(), indent=2)
+        )
+
+        subprocess.run(
+            [
+                sys.executable,
+                str(model_generator),
+                "--input",
+                str(input_json),
+                "--output",
+                str(idf_file),
+            ],
+            check=True,
+        )
+
+        eplus_dir.mkdir(parents=True, exist_ok=True)
+
+        subprocess.run(
+            [
+                str(energyplus),
+                "-w",
+                str(weather),
+                "-d",
+                str(eplus_dir),
+                str(idf_file),
+            ],
+            check=True,
+        )
+
+        if not csv_file.exists():
+            raise HTTPException(
+                status_code=500,
+                detail="EnergyPlus did not produce zone sizing results.",
+            )
+
+        subprocess.run(
+            [
+                sys.executable,
+                str(parser_script),
+                "--input-csv",
+                str(csv_file),
+                "--output-json",
+                str(result_json),
+            ],
+            check=True,
+        )
+
+        subprocess.run(
+            [
+                sys.executable,
+                str(validator_script),
+                "--input-csv",
+                str(csv_file),
+                "--input-json",
+                str(result_json),
+            ],
+            check=True,
+        )
+
+        return json.loads(result_json.read_text())
