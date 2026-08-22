@@ -136,17 +136,25 @@ def calculate(building: BuildingInput):
             json.dumps(building.model_dump(), indent=2)
         )
 
-        subprocess.run(
-            [
-                sys.executable,
-                str(model_generator),
-                "--input",
-                str(input_json),
-                "--output",
-                str(idf_file),
-            ],
-            check=True,
-        )
+        try:
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(model_generator),
+                    "--input",
+                    str(input_json),
+                    "--output",
+                    str(idf_file),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            raise HTTPException(
+                status_code=500,
+                detail="EnergyPlus input model generation failed.",
+            ) from exc
 
         eplus_dir.mkdir(parents=True, exist_ok=True)
 
@@ -176,28 +184,44 @@ def calculate(building: BuildingInput):
                 detail="EnergyPlus did not produce zone sizing results.",
             )
 
-        subprocess.run(
-            [
-                sys.executable,
-                str(parser_script),
-                "--input-csv",
-                str(csv_file),
-                "--output-json",
-                str(result_json),
-            ],
-            check=True,
-        )
+        try:
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(parser_script),
+                    "--input-csv",
+                    str(csv_file),
+                    "--output-json",
+                    str(result_json),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            raise HTTPException(
+                status_code=500,
+                detail="EnergyPlus result parsing failed.",
+            ) from exc
 
-        subprocess.run(
-            [
-                sys.executable,
-                str(validator_script),
-                "--input-csv",
-                str(csv_file),
-                "--input-json",
-                str(result_json),
-            ],
-            check=True,
-        )
+        try:
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(validator_script),
+                    "--input-csv",
+                    str(csv_file),
+                    "--input-json",
+                    str(result_json),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            raise HTTPException(
+                status_code=500,
+                detail="EnergyPlus result validation failed.",
+            ) from exc
 
         return json.loads(result_json.read_text())
