@@ -33,3 +33,5 @@ Thumbs.db
 
 # VS Code local settings
 .vscode/settings.json
+
+.env

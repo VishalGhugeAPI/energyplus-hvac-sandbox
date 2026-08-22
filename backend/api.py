@@ -1,11 +1,15 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from pathlib import Path
+from dotenv import load_dotenv
 import json
 import os
 import subprocess
 import sys
 import tempfile
+
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 
 app = FastAPI(
