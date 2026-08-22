@@ -28,6 +28,53 @@ class BuildingInput(BaseModel):
     rooms: list[Room] = Field(min_length=1)
 
 
+class DesignConditions(BaseModel):
+    heating: str
+    cooling: str
+
+
+class HeatingResult(BaseModel):
+    design_load_w: float
+    latent_load_w: float
+    mass_flow_kg_s: float
+    latent_mass_flow_kg_s: float
+    temperature_c: float
+    relative_humidity_percent: float
+
+
+class CoolingResult(BaseModel):
+    sensible_load_w: float
+    latent_load_w: float
+    mass_flow_kg_s: float
+    latent_mass_flow_kg_s: float
+    temperature_c: float
+    relative_humidity_percent: float
+
+
+class NoDoasResult(BaseModel):
+    heating_load_w: float
+    sensible_cooling_load_w: float
+    latent_heating_load_w: float
+    latent_cooling_load_w: float
+
+
+class ZoneSizingResult(BaseModel):
+    zone_name: str
+    design_conditions: DesignConditions
+    heating: HeatingResult
+    cooling: CoolingResult
+    no_doas: NoDoasResult
+
+
+class CalculateResponse(BaseModel):
+    engine: str
+    version: str
+    source: str
+    zone_count: int
+    timestep_row_count: int
+    zones: list[ZoneSizingResult]
+
+
 @app.get("/")
 def root():
     return {
@@ -43,7 +90,7 @@ def health():
     }
 
 
-@app.post("/calculate")
+@app.post("/calculate", response_model=CalculateResponse)
 def calculate(building: BuildingInput):
     project_root = Path(__file__).resolve().parent.parent
     model_generator = project_root / "backend" / "model_generator.py"
