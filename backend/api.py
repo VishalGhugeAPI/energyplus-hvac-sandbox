@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from pathlib import Path
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -45,21 +46,35 @@ def calculate(building: BuildingInput):
     parser_script = project_root / "backend" / "parse_eplus.py"
     validator_script = project_root / "backend" / "validate_results.py"
 
-    energyplus = next(
-        project_root.glob(
-            "EnergyPlus-23.2.0-*/energyplus-23.2.0"
-        ),
-        None,
-    )
+    energyplus_env = os.getenv("ENERGYPLUS_EXECUTABLE")
+    weather_env = os.getenv("ENERGYPLUS_WEATHER")
 
-    weather = next(
-        (
-            project_root / "EnergyPlus-23.2.0-7636e6b3e9-Linux-Ubuntu22.04-x86_64"
-        ).glob("WeatherData/*.epw"),
-        None,
-    )
+    if energyplus_env:
+        energyplus = Path(energyplus_env).resolve()
+    else:
+        energyplus = next(
+            project_root.glob(
+                "EnergyPlus-23.2.0-*/energyplus-23.2.0"
+            ),
+            None,
+        )
 
-    if not energyplus or not weather:
+    if weather_env:
+        weather = Path(weather_env).resolve()
+    else:
+        weather = (
+            project_root
+            / "EnergyPlus-23.2.0-7636e6b3e9-Linux-Ubuntu22.04-x86_64"
+            / "WeatherData"
+            / "USA_IL_Chicago-OHare.Intl.AP.725300_TMY3.epw"
+        )
+
+    if (
+        not energyplus
+        or not energyplus.is_file()
+        or not weather
+        or not weather.is_file()
+    ):
         raise HTTPException(
             status_code=500,
             detail="EnergyPlus executable or weather file not found.",
