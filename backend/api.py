@@ -100,25 +100,17 @@ def calculate(building: BuildingInput):
     energyplus_env = os.getenv("ENERGYPLUS_EXECUTABLE")
     weather_env = os.getenv("ENERGYPLUS_WEATHER")
 
-    if energyplus_env:
-        energyplus = Path(energyplus_env).resolve()
-    else:
-        energyplus = next(
-            project_root.glob(
-                "EnergyPlus-23.2.0-*/energyplus-23.2.0"
-            ),
-            None,
-        )
+    energyplus = (
+        Path(energyplus_env).resolve()
+        if energyplus_env
+        else None
+    )
 
-    if weather_env:
-        weather = Path(weather_env).resolve()
-    else:
-        weather = (
-            project_root
-            / "EnergyPlus-23.2.0-7636e6b3e9-Linux-Ubuntu22.04-x86_64"
-            / "WeatherData"
-            / "USA_IL_Chicago-OHare.Intl.AP.725300_TMY3.epw"
-        )
+    weather = (
+        Path(weather_env).resolve()
+        if weather_env
+        else None
+    )
 
     if (
         not energyplus
